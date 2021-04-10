@@ -5,7 +5,7 @@ import 'package:fresh/transitions/fade_animation.dart';
 
 class ReadyPage extends StatelessWidget {
   void goRecord(context) {
-    Navigator.pushNamedAndRemoveUntil(context, '/link', (route) => false);
+    Navigator.pushNamed(context, '/camera');
   }
 
   @override
