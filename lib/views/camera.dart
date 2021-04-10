@@ -1,8 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:fresh/components/button.dart';
+import 'package:fresh/data/trashlist.dart';
 import 'package:fresh/theme/palette.dart';
 import 'package:tflite/tflite.dart';
+import 'package:geolocator/geolocator.dart';
+
 
 class CameraPage extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -17,8 +21,34 @@ class _CameraPageState extends State<CameraPage> {
   CameraController _controller;
 
   bool currentlyPredicting = false;
-  List<dynamic> labels = [];
+  List<String> labels = [];
+  String lastLabel = "";
   CameraImage lastImage;
+  Position position;
+
+  void uploadResults() async {
+    if (labels.isNotEmpty) {
+      _controller.stopImageStream();
+      final image = await _controller.takePicture();
+
+      // for the sake of this hackathon, let's assume that they just have it enabled : )
+
+      var permission = await Geolocator.requestPermission();
+      final Position position = await Geolocator.getCurrentPosition();
+
+      var formData = FormData.fromMap({
+        'label': labels[0],
+        'lat': position.latitude.toString(),
+        'lng': position.longitude.toString(),
+        'image': await MultipartFile.fromFile(image?.path)
+      });
+
+      // TODO: fetch link from BLoC
+      var response = await Dio().post("https://google.com", data: formData);
+
+      startPredictions();
+    }
+  }
 
   loadMobileNet() async {
     await Tflite.loadModel(
@@ -39,8 +69,9 @@ class _CameraPageState extends State<CameraPage> {
             imageWidth: image.width,
             numResults: 3,
           );
+
           setState(() {
-            labels = results;
+            labels = TrashList.isTrashGetLabel(results);
           });
           currentlyPredicting = false;
         }
@@ -77,11 +108,14 @@ class _CameraPageState extends State<CameraPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          cameraPreview(),
-          Align(alignment: Alignment.bottomCenter, child: currentLabels())
-        ],
+      body: DefaultTextStyle(
+        style: TextStyle(color: Palette.text),
+        child: Stack(
+          children: [
+            cameraPreview(),
+            Align(alignment: Alignment.bottomCenter, child: currentLabels())
+          ],
+        ),
       ),
     );
   }
@@ -123,8 +157,12 @@ class _CameraPageState extends State<CameraPage> {
             height: 8,
           ),
           Wrap(
-            children: labels.map((l) => tagLabel(l['label'])).toList(),
-          )
+            children: labels.map((l) => tagLabel(l)).toList(),
+          ),
+          SizedBox(height: 8,),
+          Expanded(child: Container()),
+          if (labels.isNotEmpty)
+            CustomRaisedButton(child: Text("Record & Upload"), onTap: uploadResults)
         ],
       ),
     );
@@ -133,5 +171,22 @@ class _CameraPageState extends State<CameraPage> {
   Widget cameraPreview() {
     if (_controller.value.isInitialized) return CameraPreview(_controller);
     return Container();
+  }
+
+  Widget gpsLocation() {
+    if (position == null)
+      return Container();
+
+    return RichText(
+      text: TextSpan(
+        text: 'GPS: ',
+        style: TextStyle(color: Palette.primary, fontWeight: FontWeight.bold),
+        children: [
+          TextSpan(
+            text: "${position.latitude.toString()}, ${position.longitude.toString()}"
+          )
+        ]
+      )
+    );
   }
 }
