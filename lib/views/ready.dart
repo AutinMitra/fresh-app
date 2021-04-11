@@ -50,7 +50,7 @@ class ReadyPage extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              "Started recording data, and help clean the environment.",
+              "Start recording data, and help clean the environment.",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
             )
           ],

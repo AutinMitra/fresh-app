@@ -51,6 +51,8 @@ class _CameraPageState extends State<CameraPage> {
       try {
         if (state is BaseLinkExistsState) {
           // TODO: Clean baseUrl to deal with last /
+          print("${(state).baseUrl}/api/upload");
+          print(image.path);
           await Dio().post("${(state).baseUrl}/api/upload", data: formData);
           // TODO: Alert user
         }
