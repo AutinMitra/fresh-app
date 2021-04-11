@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fresh/bloc/baselink/baselink_bloc.dart';
+import 'package:fresh/bloc/baselink/baselink_state.dart';
 import 'package:fresh/components/button.dart';
 import 'package:fresh/data/trashlist.dart';
 import 'package:fresh/theme/palette.dart';
@@ -24,7 +27,6 @@ class _CameraPageState extends State<CameraPage> {
   List<String> labels = [];
   String lastLabel = "";
   CameraImage lastImage;
-  Position position;
 
   void uploadResults() async {
     if (labels.isNotEmpty) {
@@ -40,11 +42,22 @@ class _CameraPageState extends State<CameraPage> {
         'label': labels[0],
         'lat': position.latitude.toString(),
         'lng': position.longitude.toString(),
-        'image': await MultipartFile.fromFile(image?.path)
+        'file': await MultipartFile.fromFile(image?.path)
       });
 
-      // TODO: fetch link from BLoC
-      var response = await Dio().post("https://google.com", data: formData);
+      final BaseLinkBloc baseLinkBloc = BlocProvider.of<BaseLinkBloc>(context);
+      final BaseLinkState state = baseLinkBloc.state;
+
+      try {
+        if (state is BaseLinkExistsState) {
+          // TODO: Clean baseUrl to deal with last /
+          await Dio().post("${(state).baseUrl}/api/upload", data: formData);
+          // TODO: Alert user
+        }
+      } catch(e) {
+        // hackathon any%, 0 error handling
+        print(e.toString());
+      }
 
       startPredictions();
     }
@@ -171,22 +184,5 @@ class _CameraPageState extends State<CameraPage> {
   Widget cameraPreview() {
     if (_controller.value.isInitialized) return CameraPreview(_controller);
     return Container();
-  }
-
-  Widget gpsLocation() {
-    if (position == null)
-      return Container();
-
-    return RichText(
-      text: TextSpan(
-        text: 'GPS: ',
-        style: TextStyle(color: Palette.primary, fontWeight: FontWeight.bold),
-        children: [
-          TextSpan(
-            text: "${position.latitude.toString()}, ${position.longitude.toString()}"
-          )
-        ]
-      )
-    );
   }
 }

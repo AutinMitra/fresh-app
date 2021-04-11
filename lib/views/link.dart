@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fresh/bloc/baselink/baselink_bloc.dart';
+import 'package:fresh/bloc/baselink/baselink_event.dart';
 import 'package:fresh/components/button.dart';
 import 'package:fresh/components/text_fields.dart';
 import 'package:fresh/theme/palette.dart';
@@ -21,6 +24,11 @@ class _LinkPageState extends State<LinkPage> {
 
   void submitLink() {
     if(_formKey.currentState.validate()) {
+      var uri = _linkController.text;
+
+      final BaseLinkBloc baseLinkBloc = BlocProvider.of<BaseLinkBloc>(context);
+      baseLinkBloc.add(BaseLinkChangeEvent(uri));
+
       // TODO: Add url to BloC
       Navigator.pushNamedAndRemoveUntil(context, '/ready', (route) => false);
     }

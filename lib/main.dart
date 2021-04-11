@@ -1,5 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fresh/bloc/baselink/baselink_bloc.dart';
+import 'package:fresh/bloc/baselink/baselink_state.dart';
 import 'package:fresh/theme/theme.dart';
 import 'package:fresh/views/camera.dart';
 import 'package:fresh/views/home.dart';
@@ -13,7 +16,12 @@ Future<void> main() async {
 
   cameras = await availableCameras();
 
-  runApp(FocusApp());
+  runApp(MultiBlocProvider(
+    providers: <BlocProvider>[
+      BlocProvider<BaseLinkBloc>(create: (context) => BaseLinkBloc(BaseLinkNoneState()))
+    ],
+    child: FocusApp(),
+  ));
 }
 
 class FocusApp extends StatelessWidget {
